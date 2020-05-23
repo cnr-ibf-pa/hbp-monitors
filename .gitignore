@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+.idea/
+
+keys/
+monitors/module/
+
+
+./db.sqlite3
+db.sqlite3
+TODO.txt

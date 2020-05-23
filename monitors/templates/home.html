@@ -1,0 +1,50 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'assets/hbp_120.png' %}"/>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}"/>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+</head>
+<body>
+<nav class="navbar navbar-light topbar-bg-light justify-content-center shadow p-3 mb-5 bg-white" style="background-image: linear-gradient(#c6c6c6, #e6e6e6ff)">
+    <img src="{% static 'assets/hbp_120.png' %}" width="92" height="92" class="d-inline-block" alt="">
+</nav>
+<div class="container">
+<div class="row" style="padding:2%;">
+    <div class="col" style="margin: 2%;">
+        <div class="card shadow p-3 mb-5 bg-white rounded">
+            <img class="card-img-top" src="{% static 'assets/hpc_monitor_thumbnail.png' %}" alt="Card image cap">
+            <div style="background-color: #85b2c1; height:2px; width:100%;"></div>
+            <div class="card-body">
+                <h5 class="card-title">HPC Monitor</h5>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                    card's content.</p>
+            </div>
+            <div class="card-body">
+                <a href="http://bspmonitors.cineca.it/hpc-monitor" class="card-link">Go to</a>
+            </div>
+        </div>
+    </div>
+    <div class="col" style="margin: 2%;">
+        <div class="card shadow p-3 mb-5 bg-white rounded">
+            <img class="card-img-top" src="{% static 'assets/bsp_monitor_thumbnail.png' %}" alt="Card image cap">
+            <div style="background-color: #85b2c1; height:2px; width:100%;"></div>
+            <div class="card-body">
+                <h5 class="card-title">BSP Monitor</h5>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                    card's
+                    content.</p>
+            </div>
+            <div class="card-body">
+                <a href="http://bspmonitors.cineca.it/bsp-monitor" class="card-link">Go to</a>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</body>
+</html>

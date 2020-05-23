@@ -1,0 +1,523 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="{% static 'js/monitors_analytics.js' %}"></script>
+    <meta charset="UTF-8">
+    <title>HPC Status Monitor</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'assets/hbp_120.png' %}"/>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/hpc_theme.css' %}"/>
+</head>
+<body>
+<div class="body-loading">
+    <div class="lds-roller spinner">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<div id="alert" class="alert alert-danger fade-out" role="alert">
+    <button id="alert-button" type="button" class="close" style="margin-left: 1rem;" onclick="closeAlert()"
+            disabled="true">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    <div></div>
+</div>
+<nav class="navbar navbar-light topbar-bg-light justify-content-center">
+    <a class="navbar-brand justify-content-center" href="">
+        <img src="{% static 'assets/hbp_120.png' %}" width="48" height="48" class="d-inline-block align-center" alt="">
+        HPC Status Monitor
+    </a>
+</nav>
+
+<div class="d-none d-lg-block">
+    <div class="container">
+        <div class="gray-bar"></div>
+        <div class="container master-panel lg">
+            <div class="system-button-section xl d-none d-xl-block">
+                <div class="reload-button system-button xl" data-toogle="tooltip"
+                     data-placement="top" title="Refresh"></div>
+                <a href="https://collab.humanbrainproject.eu/#/collab/1655/nav/18580" target="_blank">
+                    <div class="info-button system-button xl" data-toggle="tooltip"
+                         data-placements="top" title="Info"></div>
+                </a>
+            </div>
+            <div class="system-button-section lg d-none d-lg-block d-xl-none">
+                <div class="reload-button system-button lg" data-toogle="tooltip"
+                     data-placement="top" title="Refresh"></div>
+                <a href="https://collab.humanbrainproject.eu/#/collab/1655/nav/18580" target="_blank">
+                    <div class="info-button system-button lg" data-toggle="tooltip"
+                         data-placements="top" title="Info"></div>
+                </a>
+            </div>
+            <div class="row">
+                <div class="col-lg lg label-section">
+                    <div class="row">
+                        <div class="main-text">HPC Systems</div>
+                    </div>
+                    <div class="row">
+                        <div class="main-text">HPC Status</div>
+                    </div>
+                    <div class="row">
+                        <div class="long main-text">Service Account available (SA)</div>
+                    </div>
+                </div>
+                <!-- Jureca XL-LG -->
+                <div class="col-lg lg hpc-section jureca-section disabled" onclick="onClickHpcSection('jureca')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn lg hpc-button jureca-button" disabled="true">JURECA (JSC)</button>
+                    </div>
+                    <div class="row status-section jureca-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon lg"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section jureca-sa-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pizdaint XL-LG -->
+                <div class="col-lg lg hpc-section pizdaint-section disabled" onclick="onClickHpcSection('pizdaint')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn lg hpc-button pizdaint-button" disabled="true">PIZDAINT (CSCS)</button>
+                    </div>
+                    <div class="row status-section pizdaint-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon lg"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section pizdaint-sa-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Galileo XL-LG -->
+                <div class="col-lg lg hpc-section galileo-section disabled" onclick="onClickHpcSection('galileo')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn lg hpc-button galileo-button" disabled="true">Galileo (CINECA)</button>
+                    </div>
+                    <div class="row status-section galileo-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon lg"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section galileo-sa-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NSG XL-LG -->
+                <div class="col-lg lg hpc-section nsg-section disabled" onclick="onClickHpcSection('nsg')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn lg hpc-button nsg-button" disabled="true">NSG</button>
+                    </div>
+                    <div class="row status-section nsg-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon lg"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section nsg-sa-status justify-content-center">
+                        <div class="sonar lg">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-none d-md-block d-lg-none">
+    <div class="container">
+        <div class="gray-bar"></div>
+        <div class="container master-panel md">
+            <div class="system-button-section md">
+                <div class="reload-button system-button md" data-toogle="tooltip"
+                     data-placement="top" title="Refresh"></div>
+                <a href="https://collab.humanbrainproject.eu/#/collab/1655/nav/18580" target="_blank">
+                    <div class="info-button system-button md" data-toggle="tooltip"
+                         data-placements="top" title="Info"></div>
+                </a>
+            </div>
+            <div class="row">
+                <div class="col-md label-section md">
+                    <div class="row">
+                        <div class="main-text">HPC Systems</div>
+                    </div>
+                    <div class="row">
+                        <div class="main-text">HPC Status</div>
+                    </div>
+                    <div class="row">
+                        <div class="long main-text">Service Account available (SA)</div>
+                    </div>
+                </div>
+                <!-- Jureca MD -->
+                <div class="col-md hpc-section md jureca-section disabled" onclick="onClickHpcSection('jureca')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn hpc-button md jureca-button" disabled="true">JURECA (JSC)</button>
+                    </div>
+                    <div class="row status-section jureca-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon md"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section jureca-sa-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon md"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Pizdaint MD -->
+                <div class="col-md hpc-section md pizdaint-section disabled" onclick="onClickHpcSection('pizdaint')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn hpc-button md pizdaint-button" disabled="true">PIZDAINT (CSCS)</button>
+                    </div>
+                    <div class="row status-section pizdaint-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon md"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section pizdaint-sa-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon md"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Galileo MD -->
+                <div class="col-md hpc-section md galileo-section disabled" onclick="onClickHpcSection('galileo')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn hpc-button md galileo-button" disabled="true">GALILEO (CINECA)</button>
+                    </div>
+                    <div class="row status-section galileo-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon md"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section galileo-sa-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon md"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- NSG MD -->
+                <div class="col-md hpc-section md nsg-section disabled" onclick="onClickHpcSection('nsg')">
+                    <div class="row button-section justify-content-center">
+                        <button class="btn hpc-button md nsg-button" disabled="true">NSG</button>
+                    </div>
+                    <div class="row status-section nsg-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="status-icon md"></div>
+                        </div>
+                    </div>
+                    <div class="row sa-status-section nsg-sa-status justify-content-center">
+                        <div class="sonar md">
+                            <div class="sonar-wave"></div>
+                            <div class="sa-status-icon md"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-none d-sm-block d-md-none">
+    <div class="container">
+        <div class="gray-bar"></div>
+        <div class="container master-panel sm">
+            <div class="row system-button-section xs">
+                <a href="https://collab.humanbrainproject.eu/#/collab/1655/nav/18580" target="_blank">
+                    <div class="info-button system-button xs" data-toggle="tooltip"
+                         data-placements="top" title="Info"></div>
+                </a>
+                <div class="reload-button system-button xs" data-toogle="tooltip"
+                     data-placement="top" title="Refresh"></div>
+            </div>
+            <div class="row margin-4"></div>
+            <div class="row label-section sm">
+                <div class="col-sm-4 main-text">HPC Systems</div>
+                <div class="col-sm-4 main-text">HPC Status</div>
+                <div class="col-sm-4 main-text">Service Account available (SA)</div>
+            </div>
+            <div class="row margin-4"></div>
+            <!-- Jureca SM -->
+            <div class="row hpc-section sm jureca-section disabled" onclick="onClickHpcSection('jureca')">
+                <div class="col-sm-4 button-section justify-content-center">
+                    <button class="btn hpc-button sm jureca-button" disabled="true">JURECA (JSC)</button>
+                </div>
+                <div class="col-sm-4 status-section jureca-status align-self-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon sm"></div>
+                    </div>
+                </div>
+                <div class="col-sm-4 sa-status-section jureca-sa-status align-self-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon sm"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Pizdaint SM -->
+            <div class="row hpc-section sm pizdaint-section disabled" onclick="onClickHpcSection('pizdaint')">
+                <div class="col-sm-4 button-section justify-content-center">
+                    <button class="btn hpc-button sm pizdaint-button" disabled="true">PIZDAINT (CSCS)</button>
+                </div>
+                <div class="col-sm-4 status-section pizdaint-status align-self-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon sm"></div>
+                    </div>
+                </div>
+                <div class="col-sm-4 sa-status-section pizdaint-sa-status justify-content-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon sm"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Galileo SM -->
+            <div class="row hpc-section sm galileo-section disabled" onclick="onClickHpcSection('galileo')">
+                <div class="col-sm-4 button-section justify-content-center">
+                    <button class="btn hpc-button sm galileo-button" disabled="true">GALILEO (CINECA)</button>
+                </div>
+                <div class="col-sm-4 status-section galileo-status align-self-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon sm"></div>
+                    </div>
+                </div>
+                <div class="col-sm-4 sa-status-section galileo-sa-status justify-content-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon sm"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- NSG SM -->
+            <div class="row hpc-section sm nsg-section disabled" onclick="onClickHpcSection('nsg')">
+                <div class="col-sm-4 button-section justify-content-center">
+                    <button class="btn hpc-button sm nsg-button" disabled="true">NSG</button>
+                </div>
+                <div class="col-sm-4 status-section nsg-status justify-content-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon sm"></div>
+                    </div>
+                </div>
+                <div class="col-sm-4 sa-status-section nsg-sa-status justify-content-center">
+                    <div class="sonar sm">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="d-xs-block d-sm-none">
+    <div class="container xs">
+        <div class="gray-bar"></div>
+        <div class="container master-panel xs">
+            <div class="row system-button-section xs">
+                <a href="https://collab.humanbrainproject.eu/#/collab/1655/nav/18580" target="_blank">
+                    <div class="info-button system-button xs" data-toggle="tooltip"
+                         data-placements="top" title="Info"></div>
+                </a>
+                <div class="reload-button system-button xs" data-toogle="tooltip"
+                     data-placement="top" title="Refresh"></div>
+            </div>
+            <!-- Jureca XS -->
+            <div class="row margin-4"></div>
+            <div class="row xs hpc-section jureca-section disabled" onclick="onClickHpcSection('jureca')">
+                <div class="col-12 button-section">
+                    <button class="btn hpc-button xs jureca-button" disabled="true">JURECA (JSC)</button>
+                </div>
+                <div class="col-6 xs label-section main-text">HPC Status</div>
+                <div class="col-6 xs status-section jureca-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon xs"></div>
+                    </div>
+                </div>
+                <div class="col-6 xs label-section main-text">Service Account available (SA)</div>
+                <div class="col-6 xs sa-status-section jureca-sa-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon xs"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Pizdaint XS -->
+            <div class="row margin-4"></div>
+            <div class="row xs hpc-section pizdaint-section disabled" onclick="onClickHpcSection('pizdaint')">
+                <div class="col-12 button-section">
+                    <button class="btn hpc-button xs pizdaint-button" disabled="true">PIZDAINT (CSCS)</button>
+                </div>
+                <div class="col-6 xs label-section main-text">HPC Status</div>
+                <div class="col-6 xs status-section pizdaint-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon xs"></div>
+                    </div>
+                </div>
+                <div class="col-6 xs label-section main-text">Service Account available (SA)</div>
+                <div class="col-6 xs sa-status-section pizdaint-sa-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon xs"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Galileo XS -->
+            <div class="row margin-4"></div>
+            <div class="row xs hpc-section galileo-section disabled" onclick="onClickHpcSection('galileo')">
+                <div class="col-12 button-section">
+                    <button class="btn hpc-button xs galileo-button" disabled="true">GALILEO (CINECA)</button>
+                </div>
+                <div class="col-6 xs label-section main-text">HPC Status</div>
+                <div class="col-6 xs status-section galileo-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon xs"></div>
+                    </div>
+                </div>
+                <div class="col-6 xs label-section main-text">Service Account available (SA)</div>
+                <div class="col-6 xs sa-status-section galileo-sa-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon xs"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- NSG XS -->
+            <div class="row margin-4"></div>
+            <div class="row xs hpc-section nsg-section disabled" onclick="onClickHpcSection('nsg')">
+                <div class="col-12 button-section">
+                    <button class="btn hpc-button xs nsg-button" disabled="true">NSG</button>
+                </div>
+                <div class="col-6 xs label-section main-text">HPC Status</div>
+                <div class="col-6 xs status-section nsg-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="status-icon xs"></div>
+                    </div>
+                </div>
+                <div class="col-6 xs label-section main-text">Service Account available (SA)</div>
+                <div class="col-6 xs sa-status-section nsg-sa-status align-self-center">
+                    <div class="sonar xs">
+                        <div class="sonar-wave"></div>
+                        <div class="sa-status-icon xs"></div>
+                    </div>
+                </div>
+            </div> 
+        </div>
+    </div>
+</div>
+
+<div id="bottom-panel" class="container bottom-panel">
+    <div class="gray-bar"></div>
+    <div class="details-section">   
+        <div class="d-none d-lg-block">
+            <div class="row justify-content-around">
+                <div class="col-6 main-text details-text lg">User's Details</div>
+                <div class="col-6">
+                    <div class="menu-wrapper float-right lg"><p class="menu-btn lg"></p></div>
+                </div>
+            </div>
+        </div>
+        <div class="d-none d-md-block d-lg-none">
+            <div class="row justify-content-around">
+                <div class="col-6 main-text details-text md">User's Details</div>
+                <div class="col-6">
+                    <div class="menu-wrapper float-right md"><p class="menu-btn md"></p></div>
+                </div>
+            </div>
+        </div>
+        <div class="d-none d-sm-block d-md-none">
+            <div class="row justify-content-around">
+                <div class="col-6 main-text details-text sm">User's Details</div>
+                <div class="col-6">
+                    <div class="menu-wrapper float-right md"><p class="menu-btn md"></p></div>
+                </div>
+            </div>
+        </div>
+        <div class="d-xs-block d-sm-none">
+            <div class="row justify-content-around">
+                <div class="col-6 main-text details-text xs">User's Details</div>
+                <div class="col-6">
+                    <div class="menu-wrapper float-right xs"><p class="menu-btn xs"></p></div>
+                </div>
+            </div>
+        </div>
+        <div id="details-panel" class="collapse">
+            <div id="details-panel-container" class="container details-panel">
+                <div class="row info-section">
+                    <div class="d-none d-lg-block col-lg-4 info-text projects-label">Projects</div>
+                    <div class="d-none d-md-block d-lg-none col-md-4 info-text projects-label">Projects</div>
+                    <div class="d-none d-sm-block d-md-none col-sm-4 info-text projects-label">Projects</div>
+                    <div class="d-sm-none col-12 info-text projects-label">Projects</div>
+
+                    <div class="d-none d-lg-block col-lg-4 info-text quota-label">Quota (core-h)</div>
+                    <div class="d-none d-md-block d-lg-none col-md-4 info-text quota-label">Quota (core-h)</div>
+                    <div class="d-none d-sm-block d-md-none col-sm-4 info-text quota-label">Quota (core-h)</div>
+
+                    <div class="d-none d-lg-block col-lg-4 info-text submission-label">Submission Enabled</div>
+                    <div class="d-none d-md-block d-lg-none col-md-4 info-text submission-label">Submission Enabled</div>
+                    <div class="d-none d-sm-block d-md-none col-sm-4 info-text submission-label">Submission Enabled</div>
+                </div>
+                <div class="d-none d-lg-block projects lg"></div>
+                <div class="d-none d-md-block d-lg-none projects md"></div>
+                <div class="d-none d-sm-block d-md-none projects sm"></div>
+                <div class="d-block d-sm-none projects xs"></div>
+            </div>
+        </div>
+    </div>      
+</div>
+
+
+<script>
+    var hpc = "{{ hpc }}";
+    sessionStorage.setItem("hpc", hpc);
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+<script src="{% static 'js/jso.js' %}"></script>
+<script src="{% static 'js/bootstrap.js' %}"></script>
+<script src="{% static 'js/progressbar.js' %}"></script>
+<script src="{% static 'js/hpc_index.js' %}"></script>
+</body>
+</html>
+
+
