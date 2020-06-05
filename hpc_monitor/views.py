@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 from hpc_monitor.utils.hpc import HPC_SYSTEMS
 
@@ -15,18 +15,13 @@ def index(request):
     return render(request, 'hpc_index.html', data)
 
 
-def get_status(request):
-    if request.method == 'GET':
-        content = {'bsp-hpc-monitor-status': 1}
-        return HttpResponse(json.dumps(content), content_type='application/json')
-
-
 def get_hpc_info(request):
     print(request.path)
     url = ''
     headers = {
         'Authorization': request.META['HTTP_AUTHORIZATION'],
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
     }
     if 'HTTP_X_UNICORE_USER_PREFERENCES' in request.META:
         headers['HTTP_X_UNICORE_USER_PREFERENCES'] = request.META['HTTP_X_UNICORE_USER_PREFERENCES']
@@ -41,6 +36,11 @@ def get_hpc_info(request):
         url = 'https://grid.hpc.cineca.it:9111/CINECA-GALILEO/rest/core/factories/default_target_system_factory'
     print(url)
     r = requests.get(url=url, headers=headers, verify=False)
+    try:
+        jj = r.json()
+        return JsonResponse(data=jj, status=r.status_code)
+    except KeyError:
+        print('error')
     return HttpResponse(status=r.status_code, content=r.content)
 
 

@@ -1,5 +1,8 @@
 # HPC System enabled
 
+from monitors.settings import ROOT_SITE_URL as ROOT_URL
+
+
 HPC_SYSTEMS = {
 
     '0': {
@@ -18,10 +21,9 @@ HPC_SYSTEMS = {
     '1': {
         'name': 'PIZDAINT (CSCS)',
         'id': 'PIZDAINT',
-        'root_url': 'https://bspmonitors.cineca.it/hpc-monitor/pizdaint',
-        'root_url': 'http://bspmonitors.cineca.it/hpc-monitor/pizdaint',
+        'root_url': ROOT_URL + '/hpc-monitor/pizdaint',
         'submit_url': 'https://unicoregw.cscs.ch:8080/DAINT-CSCS/rest/core/jobs',
-        'quota_url': 'http://bspmonitors.cineca.it/hpc-monitor/pizdaint/projects',
+        'quota_url': ROOT_URL + '/hpc-monitor/pizdaint/projects',
         'system': 'UNICORE',
         'job': {
             'on_system': "{'Executable': '/bin/date', 'Resources': {'Runtime': '60', 'NodeConstraints': 'mc'}}",
@@ -35,9 +37,9 @@ HPC_SYSTEMS = {
     '2': {
         'name': 'GALILEO (CINECA)',
         'id': 'GALILEO',
-        'root_url': 'http://bspmonitors.cineca.it/hpc-monitor/galileo',
+        'root_url': ROOT_URL + '/hpc-monitor/galileo',
         'submit_url': 'https://grid.hpc.cineca.it:9111/CINECA-GALILEO/rest/core/jobs',
-        'quota_url': 'http://bspmonitors.cineca.it/hpc-monitor/galileo/projects',
+        'quota_url': ROOT_URL + '/hpc-monitor/galileo/projects',
         'system': 'UNICORE',
         'job': {
             'on_system': "{'Executable': '/bin/date', 'Resources': {'Runtime': '60'}}",

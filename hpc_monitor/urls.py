@@ -6,7 +6,6 @@ urlpatterns = [
     path('', views.index, name='index'),
 
     # path('user', views.get_user, name='user'),
-    path('status', views.get_status, name='status'),
 
     path('pizdaint', views.get_hpc_info, name='pizdaint'),
     path('pizdaint/projects', views.get_hpc_info, name='pizdaint-projects'),

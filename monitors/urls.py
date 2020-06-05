@@ -24,6 +24,7 @@ register_converter(converters.ApplicationConverter, 'app')
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('status', views.get_status, name='status'),
     path('user', views.get_user, name='user'),
     path('get-data', views.get_data, name='get_data'),
     path('get-data/<int:user_id>', views.get_data, name='get_data'),

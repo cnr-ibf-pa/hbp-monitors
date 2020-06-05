@@ -1,7 +1,10 @@
+const ROOT_SITE_URL = "https://bspmonitors.cineca.it"
+
+
 let client = new jso.JSO({
 	providerID: "HBP",
 	client_id: "d250d50c-7055-4e11-8919-d5d4a0400d6c",
-	redirect_uri: "http://bspmonitors.cineca.it/bsp-monitor/",
+	redirect_uri: ROOT_SITE_URL + "/bsp-monitor/",
 	authorization: "https://services.humanbrainproject.eu/oidc/authorize",
 })
 
@@ -15,7 +18,7 @@ function login() {
     var authorization = client.getToken();
     authorization.then((session) => {
         $.ajax({
-            url: 'http://bspmonitors.cineca.it/user',
+            url: ROOT_SITE_URL + "/user",
             headers: {
                 "Authorization": "Bearer " + session.access_token,
                 "Context": "BSP"

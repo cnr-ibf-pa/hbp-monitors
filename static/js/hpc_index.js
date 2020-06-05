@@ -1,7 +1,10 @@
+const ROOT_SITE_URL = "https://bspmonitors.cineca.it"
+
+
 let client = new jso.JSO({
     providerID: "HBP",
     client_id: "d59569a0-6485-4eff-88e0-f11cf92f43bc",
-    redirect_uri: "http://bspmonitors.cineca.it/hpc-monitor",
+    redirect_uri: ROOT_SITE_URL + "/hpc-monitor",
     authorization: "https://services.humanbrainproject.eu/oidc/authorize",
 })
 
@@ -122,7 +125,8 @@ function requestProject(session, hpc, isServiceAccount=false) {
 	url: URL,
 	headers: {
 	    "Authorization": "Bearer " + session.access_token,
-	    "Content-Type": "application/json"
+	    "Content-Type": "application/json",
+            "Accept": "application/json"
         },
 	method: "GET",
 	timeout: 30000,
@@ -179,12 +183,23 @@ function requestProject(session, hpc, isServiceAccount=false) {
 }
 
 
-function extractProjectQuota(data) {
+function extractProjectQuota(data, project) {
     console.log("Extracting quota... ");
-    console.log(data);
+    //console.log(data);
     let quota;
     if (typeof data == "object") {
-        quota = data.remainingComputeTime;
+        for (var key in data) {
+            if (key == "remainingComputeTime") {
+                var subKey = Object.keys(data[key]);
+                if (subKey.length == 0) {
+                    quota = data[key];
+                }
+                else if (subKey.length == 1) {
+                    quota = data[key][subKey].remaining;
+                }
+                break;
+            }
+        }
     } else if (typeof data == "string") {
         try {
             quota = data.split('"remainingComputeTime":')[1].split(',')[0];
@@ -220,7 +235,8 @@ function requestProjectQuota(session, project) {
     
     var header = {
         "Authorization": "Bearer " + session.access_token,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
     if (projectId != "default") {
         header["X-UNICORE-User-Preferences"] = "group:" + projectId
@@ -231,7 +247,7 @@ function requestProjectQuota(session, project) {
         headers: header,
         timeout: 30000,
         success: function(result) {
-            project["quota"] = extractProjectQuota(result);
+            project["quota"] = extractProjectQuota(result, projectId);
             project["perc"] = 1;
             totalProject.quota += project.quota;
         },
@@ -364,7 +380,7 @@ function checkJobSubmission(checkButton) {
             METHOD = "GET";
         } else {
             if (hpcContext.id == "PIZDAINT") {
-                URL = "http://bspmonitors.cineca.it/" + hpcContext.id.toLowerCase() + "/check";
+                URL = ROOT_SITE_URL +  hpcContext.id.toLowerCase() + "/check";
                 METHOD = "GET";
             } else {
                 URL = hpcContext.submit_url;
@@ -803,7 +819,7 @@ function login() {
     var authorization = client.getToken();
     authorization.then((session) => {
         $.ajax({
-            url: "http://bspmonitors.cineca.it/user",
+            url: ROOT_SITE_URL + "/user",
             headers: {
                 "Authorization": "Bearer " + session.access_token,
                 "Context": "HPC"
@@ -823,6 +839,7 @@ function login() {
 
 
 const SERVICE_ACCOUNT_URL = "https://bspsa.cineca.it/";
+
 
 var HPC_JSON = JSON.parse(decodeHTML(sessionStorage.getItem("hpc", hpc)));
 var HPC_KEYS = Object.keys(HPC_JSON);

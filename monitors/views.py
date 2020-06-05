@@ -9,6 +9,12 @@ import requests
 import json
 
 
+def get_status(request):
+    if request.method == 'GET':
+        content = {'bsp-hpc-monitor-status': 1}
+        return HttpResponse(json.dumps(content), content_type='application/json')
+
+
 def get_user(request):
     user_id = -1
     application = request.META['HTTP_CONTEXT']

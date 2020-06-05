@@ -151,3 +151,6 @@ STATICFILES_DIRS = (
 )
 
 HBP_MY_USER_URL = 'https://services.humanbrainproject.eu/idm/v1/api/user/me'
+
+ROOT_SITE_URL = 'https://bspmonitors.cineca.it'
+
