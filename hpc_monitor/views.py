@@ -46,8 +46,11 @@ def get_hpc_info(request):
 
 def check_job_submission(request):
     hpc = None
-    if request.path == '/pizdaint/check':
+
+    if request.path == '/hpc-monitor/pizdaint/check':
         hpc = HPC_SYSTEMS['1']
+    elif request.path == '/hpc-monitor/galileo/check':
+        hpc = HPC_SYSTEMS['2']
 
     job = hpc['job']['on_system']
     headers = {

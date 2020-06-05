@@ -379,8 +379,8 @@ function checkJobSubmission(checkButton) {
             URL = SERVICE_ACCOUNT_URL + "jobs/" + hpcContext.id + "/" + projectName.split(" (sa)")[0] + "/example/";
             METHOD = "GET";
         } else {
-            if (hpcContext.id == "PIZDAINT") {
-                URL = ROOT_SITE_URL +  hpcContext.id.toLowerCase() + "/check";
+            if (hpcContext.id == "PIZDAINT" || hpcContext.id == "GALILEO") {
+                URL = ROOT_SITE_URL + "/hpc-monitor/" + hpcContext.id.toLowerCase() + "/check";
                 METHOD = "GET";
             } else {
                 URL = hpcContext.submit_url;
