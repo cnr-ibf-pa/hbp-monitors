@@ -28,6 +28,7 @@ function appendTotalProject() {
     });
     totalProject.el = setCircleProgressBarByClassName(".total-quota");
     totalProject.step = 1.0 / projects.length;
+    totalProject.stepDone = 0.0;
     console.log("total project = " + projects.length.toString() + " total step = " + totalProject.step.toString());
 }    
 
@@ -68,6 +69,7 @@ function appendProject(project, isServiceAccount=false) {
 async function checkUser(data) {
     console.log("extracting user");
     if (typeof data == "object") {
+        console.log(data);
         user = data.client.role.selected;
     } else if (typeof data == "string") {
         try {
@@ -105,6 +107,7 @@ async function checkUser(data) {
 
 function extractGroupsFromHTML(data) {
     console.log("extracting groups from html response...");
+    console.log(data);
     var root = document.createElement("html");
     root.innerHTML = data;
     var elements = root.getElementsByTagName("li");
@@ -118,7 +121,78 @@ function extractGroupsFromHTML(data) {
 }
 
 
+function requestPizDaintProject(session, hpc, isServiceAccount=false) {
+    var URL = isServiceAccount ? URL = SERVICE_ACCOUNT_URL + "quotas/" + hpc.id.toLowerCase() + "/" : hpc.quota_url;
+    console.log("pizdaintProjectRequests() called. URL: " + URL);
+    var HEADERS = {
+        "Authorization": "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    $.ajax({
+        url: URL,
+        headers: HEADERS,
+        method: "GET",
+        timeout: 30000,
+        success: function(result) {
+            console.log("result code: 200");
+            console.log(result);
+            if (isServiceAccount) {
+                console.log("append service-account projects");
+                for (let i = 0; i < result.length; i++) {
+                    appendProject(result[i], isServiceAccount);
+                }
+            } else {
+                URL = isServiceAccount ? URL = SERVICE_ACCOUNT_URL + "quotas/" + hpc.id.toLowerCase() + "/" : hpc.root_url;
+                $.ajax({
+                    url: URL, 
+                    headers: HEADERS,
+                    method: "GET",
+                    timeout: 30000,
+                    success: function(result2) {
+                        if (!checkUser(result2)) {
+                            closeDetailsPanel();
+                            return;
+                        }    
+                    }
+                });
+                let groups = []
+                groups = Object.keys(result.remainingComputeTime);
+                console.log(result.remainingComputeTime)
+                console.log(groups)
+                if (groups.length > 0) {
+                    for (let i = 0; i < groups.length; i++) {
+                        appendProject(groups[i]);
+                    }
+                } else {
+                    appendDefaultProject();
+                }
+            }
+        },
+        error: function(error, status, code) {
+            if (status == "timeout") {
+	        showAlert("Your request has expired.<br>Please try again later.");
+	    }
+	},
+        complete: function(data) {
+            if (isServiceAccount) {
+                isRequestSAProjectFinished = true;
+            } else {
+                isRequestProjectFinished = true;
+            }
+        }
+    });
+}
+
+
 function requestProject(session, hpc, isServiceAccount=false) {
+    
+    if (hpc.id == "PIZDAINT") {
+        requestPizDaintProject(session, hpc, isServiceAccount);
+        return;
+    } 
+
+
     var URL = isServiceAccount ? URL = SERVICE_ACCOUNT_URL + "quotas/" + hpc.id.toLowerCase() + "/" : hpc.root_url;
     console.log("projectRequests() called. URL: " + URL);
     $.ajax({
@@ -131,7 +205,9 @@ function requestProject(session, hpc, isServiceAccount=false) {
 	method: "GET",
 	timeout: 30000,
 	success: function(result) {
-	    if (isServiceAccount) {
+	    console.log("requestProject() called.");
+            console.log(result);
+            if (isServiceAccount) {
                 console.log("append service-account projects");
 		for (let i = 0; i < result.length; i++) {
 	            appendProject(result[i], isServiceAccount);
@@ -141,7 +217,6 @@ function requestProject(session, hpc, isServiceAccount=false) {
                     closeDetailsPanel();
                     return;
                 }
-                console.log("extracting groups...");
                 let groups = [];
                 if (typeof result == "object") {
                     groups = result.client.xlogin.availableGroups;
@@ -164,6 +239,7 @@ function requestProject(session, hpc, isServiceAccount=false) {
                     // if no project is found, add default one.
                     appendDefaultProject();
                 }
+                console.log("extracting groups...");
                 console.log(groups)
             }
         },
@@ -185,17 +261,29 @@ function requestProject(session, hpc, isServiceAccount=false) {
 
 function extractProjectQuota(data, project) {
     console.log("Extracting quota... ");
-    //console.log(data);
+    console.log(data);
+    console.log(project);
     let quota;
     if (typeof data == "object") {
         for (var key in data) {
             if (key == "remainingComputeTime") {
                 var subKey = Object.keys(data[key]);
+                console.log("SUBKEY:");
+                console.log(subKey);
                 if (subKey.length == 0) {
                     quota = data[key];
                 }
                 else if (subKey.length == 1) {
                     quota = data[key][subKey].remaining;
+                } else {
+                    for (let i = 0; i < subKey.length; i++) {
+                        console.log(data[key][subKey[i]]);
+                        if (subKey[i] == project) {
+                            quota = data[key][subKey[i]].remaining;
+                            console.log(quota)
+                            break;
+                        }
+                    }
                 }
                 break;
             }
@@ -289,11 +377,11 @@ function animateQuotaBar(project) {
             }
         }
     } else {
-        let step = totalProject.step;
-        totalProject.step += step;
+        console.log("animateQuotaBar() for total-quota");
+        totalProject.stepDone += totalProject.step;
         for (let i = 0; i < totalProject.el.length; i++) {
             totalProject.el[i]._container.classList.remove("fade-infinite");
-            totalProject.el[i].animate(step);
+            totalProject.el[i].animate(totalProject.stepDone);
         }
     }
 }
@@ -382,6 +470,7 @@ function checkJobSubmission(checkButton) {
             if (hpcContext.id == "PIZDAINT" || hpcContext.id == "GALILEO") {
                 URL = ROOT_SITE_URL + "/hpc-monitor/" + hpcContext.id.toLowerCase() + "/check";
                 METHOD = "GET";
+                HEADERS["X-UNICORE-User-Preferences"] = "group:" + projectName;
             } else {
                 URL = hpcContext.submit_url;
                 METHOD = "POST";
@@ -400,6 +489,7 @@ function checkJobSubmission(checkButton) {
                 $(".project.sonar." + projectName).css("opacity", "1");
             },
             success: function(data, status, code) {
+                console.log(data);
                 $(".project.sonar." + projectName + " > .submission-icon").addClass("ok");
             },
             error: function(data, status, code) {
