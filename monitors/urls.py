@@ -33,4 +33,10 @@ urlpatterns = [
 
     path('bsp-monitor/', include('bsp_monitor.urls')),
     path('hpc-monitor/', include('hpc_monitor.urls')),
+
+    # path('authenticate', views.path)
+
+    path('oidc/', include('mozilla_django_oidc.urls')),
+
+    # path('oidc/callback', views.authentication),
 ]  # + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

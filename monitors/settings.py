@@ -13,14 +13,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import sys
 
-from monitors.module.path import *
-sys.path.append(KEYS_PATH)
-sys.path.append(DB_CONF_PATH)
+DEBUG = True
 
-from production_key import SECRET_KEY
-from database_conf import *
+ADMIN_ID = [306328, 251951, 301330]
 
-from monitors.module.admin import ADMIN_ID
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -30,9 +26,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
+from django.core.management import utils
+SECRET_KEY = utils.get_random_secret_key()
 
 
 # Application definition
@@ -40,6 +38,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'mozilla_django_oidc',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -50,6 +49,12 @@ INSTALLED_APPS = [
     'hpc_monitor',
 ]
 
+# Add 'mozilla_django_oidc' authentication backend
+AUTHENTICATION_BACKENDS = (
+    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
+)
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -57,6 +62,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'mozilla_django_oidc.middleware.SessionRefresh',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -84,27 +90,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'monitors.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_USER_PASSWD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT
-    }
-}
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -150,7 +146,24 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'bsp_monitor/static/'),
 )
 
-HBP_MY_USER_URL = 'https://services.humanbrainproject.eu/idm/v1/api/user/me'
+EBRAINS_USER_URL = 'https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/userinfo'
 
 ROOT_SITE_URL = 'https://bspmonitors.cineca.it'
 
+
+# Mozilla django oidc settings
+OIDC_OP_AUTHORIZATION_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/auth"
+OIDC_OP_TOKEN_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/token"
+OIDC_OP_USER_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/userinfo"
+OIDC_RP_SIGN_ALGO ="RS256"
+OIDC_OP_JWKS_ENDPOINT="https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/certs"
+OIDC_STORE_ACCESS_TOKEN = True
+
+LOGIN_REDIRECT_URL = '/'
+
+# Store secret somewhere on your system
+OIDC_RP_CLIENT_ID = 'hpc-monitor-dev'
+OIDC_RP_CLIENT_SECRET = 'e506b288-d871-40b5-ae23-7efd18558a9f'
+
+OIDC_STORE_ACCESS_TOKEN = True
+OIDC_CREATE_USER = False

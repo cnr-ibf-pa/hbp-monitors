@@ -1,13 +1,6 @@
+window.localStorage.setItem("access_token", "");
+
 const ROOT_SITE_URL = "https://bspmonitors.cineca.it"
-
-
-let client = new jso.JSO({
-    providerID: "HBP",
-    client_id: "d59569a0-6485-4eff-88e0-f11cf92f43bc",
-    redirect_uri: ROOT_SITE_URL + "/hpc-monitor",
-    authorization: "https://services.humanbrainproject.eu/oidc/authorize",
-})
-
 
 var user = null;
 var hpcContext = "";
@@ -889,6 +882,8 @@ async function closeAlert() {
 }
 
 
+
+
 async function startApp() {
     console.log("startApp() called.");
     $(".body-loading").addClass("fade-out");
@@ -899,31 +894,23 @@ async function startApp() {
     updateSystemsStatus();
 }
 
-
-function login() {
-    try {
-        client.callback();
-    } catch (e) {
-        console.warn("Issue decoding the token");
-    }
-    var authorization = client.getToken();
-    authorization.then((session) => {
-        $.ajax({
-            url: ROOT_SITE_URL + "/user",
-            headers: {
-                "Authorization": "Bearer " + session.access_token,
-                "Context": "HPC"
-            },
-            type: "GET",
-            success: function(data) {
-                startApp();
-            },
-            error: function(data) {
-                console.error("User not detected");
-                showAlert("User not detected!");
-                location.reload();
-            }
-        });
+function getLogin() {
+    $.ajax({
+        url: "/user",
+        type: "GET",
+        headers: {
+            "Context": "HPC"
+        },
+        success: (results) => {
+            data = JSON.parse(results);
+            console.log(data);
+            startApp();
+        },
+        error: (error) => {
+            console.error("User not detected");
+            // showAlert("User not detected");
+            window.location.href = "/oidc/authenticate/";
+        }
     });
 }
 
@@ -937,7 +924,7 @@ var HPC_KEYS = Object.keys(HPC_JSON);
 
 $(document).ready(() => {
     console.log("document ready!");
-    login();
+    getLogin();
 });
 
 

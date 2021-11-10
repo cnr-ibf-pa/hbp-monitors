@@ -1,7 +1,7 @@
 from oauth2client.service_account import ServiceAccountCredentials
 
-from monitors.settings import BSPKEY_FILEPATH
-from monitors.settings import BSPKEY_FILEPATH_GSHEET
+# from monitors.settings import BSPKEY_FILEPATH
+# from monitors.settings import BSPKEY_FILEPATH_GSHEET
 
 import gspread
 import json
@@ -14,13 +14,13 @@ class GoogleStatManager:
     SCOPE = 'https://www.googleapis.com/auth/analytics.readonly'
 
     # The location of the key file with the key data.
-    KEY_FILEPATH = BSPKEY_FILEPATH
+    # KEY_FILEPATH = BSPKEY_FILEPATH
 
     # The scope for the OAuth2 request.
     SCOPE_GSHEET = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
     # The location of the key file with the key data.
-    KEY_FILEPATH_GSHEET = BSPKEY_FILEPATH_GSHEET
+    # KEY_FILEPATH_GSHEET = BSPKEY_FILEPATH_GSHEET
 
     # Defines a method to get an access token from the ServiceAccount object.
     @classmethod
