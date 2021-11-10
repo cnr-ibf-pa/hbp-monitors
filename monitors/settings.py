@@ -13,9 +13,11 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import sys
 
-DEBUG = False
+from monitors.module.path import *
+sys.path.append(KEYS_PATH)
+sys.path.append(DB_CONF_PATH)
 
-ADMIN_ID = [306328, 251951, 301330]
+DEBUG = False
 
 
 
@@ -95,8 +97,12 @@ WSGI_APPLICATION = 'monitors.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_USER_PASSWD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT
     }
 }
 
