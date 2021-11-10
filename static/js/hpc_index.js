@@ -1,5 +1,3 @@
-window.localStorage.setItem("access_token", "");
-
 const ROOT_SITE_URL = "https://bspmonitors.cineca.it"
 
 var user = null;
@@ -114,11 +112,11 @@ function extractGroupsFromHTML(data) {
 }
 
 
-function requestPizDaintProject(session, hpc, isServiceAccount=false) {
+function requestPizDaintProject(hpc, isServiceAccount=false) {
     var URL = isServiceAccount ? URL = SERVICE_ACCOUNT_URL + "quotas/" + hpc.id.toLowerCase() + "/" : hpc.quota_url;
     console.log("pizdaintProjectRequests() called. URL: " + URL);
     var HEADERS = {
-        "Authorization": "Bearer " + session.access_token,
+        "Authorization": "Bearer " + window.sessionStorage.getItem("access_token"),
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
@@ -178,20 +176,19 @@ function requestPizDaintProject(session, hpc, isServiceAccount=false) {
 }
 
 
-function requestProject(session, hpc, isServiceAccount=false) {
+function requestProject(hpc, isServiceAccount=false) {
     
     if (hpc.id == "PIZDAINT") {
-        requestPizDaintProject(session, hpc, isServiceAccount);
+        requestPizDaintProject(hpc, isServiceAccount);
         return;
     } 
-
 
     var URL = isServiceAccount ? URL = SERVICE_ACCOUNT_URL + "quotas/" + hpc.id.toLowerCase() + "/" : hpc.root_url;
     console.log("projectRequests() called. URL: " + URL);
     $.ajax({
 	url: URL,
 	headers: {
-	    "Authorization": "Bearer " + session.access_token,
+	    "Authorization": "Bearer " + window.sessionStorage.getItem("access_token"),
 	    "Content-Type": "application/json",
             "Accept": "application/json"
         },
@@ -310,12 +307,12 @@ function extractProjectQuota(data, project) {
 }
 
 
-function requestProjectQuota(session, project) {
+function requestProjectQuota(project) {
     var projectId = project["id"].split("-quota")[0];
     console.log("requestProjectQuota() on project: " + projectId);
     
     var header = {
-        "Authorization": "Bearer " + session.access_token,
+        "Authorization": "Bearer " + window.sessionStorage.getItem("access_token"),
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
@@ -346,7 +343,7 @@ function requestProjectQuota(session, project) {
 }
 
 
-function loadQuota(session) {
+function loadQuota() {
     // get quota for all projects contained into projects[]
     console.log("loadQuota() called, number of projects=" + projects.length);
     for (let i = 0; i < projects.length; i++) {
@@ -355,7 +352,7 @@ function loadQuota(session) {
             animateQuotaBar(totalProject);
         } else {
             // if projects[i] is not a service-account's project, then request quota
-            requestProjectQuota(session, projects[i]);
+            requestProjectQuota(projects[i]);
         }
     }
 }
@@ -394,43 +391,33 @@ async function getProjects(hpc) {
     }
     hpcContext = hpc;
 
-    try {
-        client.callback();
-    } catch (e) {
-	console.warn("Issue decoding the token");
+    if (hpc.id == "NSG") {
+        isRequestSAProjectFinished = false;
+        isRequestProjectFinished = true;
+        console.log("Requesting NSG Service Account projects");
+        requestProject(hpc, true);
+    } else {
+        isRequestSAProjectFinished = ($("." + hpc.id.toLowerCase() + "-sa-status > .sonar > .sa-status-icon").hasClass("ok")) ? false : true;
+        isRequestProjectFinished = false;
+        console.log("Requesting " + hpc.id.toUpperCase() + " projects");
+        requestProject(hpc);
+        if ($("." + hpc.id.toLowerCase() + "-sa-status > .sonar > .sa-status-icon").hasClass("ok")) {
+            console.log("Requesting " + hpc.id.toUpperCase() + " Service Account projects");
+            requestProject(hpc, true)
+        }
     }
 
-    var authorization = client.getToken();
-    authorization.then(async (session) => {
-
-        if (hpc.id == "NSG") {
-            isRequestSAProjectFinished = false;
-            isRequestProjectFinished = true;
-            console.log("Requesting NSG Service Account projects");
-            requestProject(session, hpc, true);
-        } else {
-            isRequestSAProjectFinished = ($("." + hpc.id.toLowerCase() + "-sa-status > .sonar > .sa-status-icon").hasClass("ok")) ? false : true;
-            isRequestProjectFinished = false;
-            console.log("Requesting " + hpc.id.toUpperCase() + " projects");
-            requestProject(session, hpc);
-            if ($("." + hpc.id.toLowerCase() + "-sa-status > .sonar > .sa-status-icon").hasClass("ok")) {
-                console.log("Requesting " + hpc.id.toUpperCase() + " Service Account projects");
-                requestProject(session, hpc, true)
-            }
-        }
-
-        while (!isRequestProjectFinished || !isRequestSAProjectFinished) {
-            await sleep(500);
-        }
-        
-        if (user == "anonymous" && !(hpc.id == "NSG" || hpc.id == "PIZDAINT")) {
-            return;
-        }
-        appendTotalProject();
-        openDetailsPanel();
+    while (!isRequestProjectFinished || !isRequestSAProjectFinished) {
         await sleep(500);
-        loadQuota(session);
-    });
+    }
+    
+    if (user == "anonymous" && !(hpc.id == "NSG" || hpc.id == "PIZDAINT")) {
+        return;
+    }
+    appendTotalProject();
+    openDetailsPanel();
+    await sleep(500);
+    loadQuota();
 }
 
 
@@ -439,66 +426,55 @@ function checkJobSubmission(checkButton) {
     let projectName = checkButton.classList[1];
     let isServiceAccount = checkButton.parentElement.parentElement.classList.contains("service-account");
 
-    try {
-        client.callback();
-    } catch (e) {
-        console.warn("Issue decoding the token");
+    let URL = '';
+    let METHOD = '';
+    let JOB = null;
+    let HEADERS = {
+        "Authorization": "Bearer " + window.sessionStorage.getItem("access_token"),
+        "Content-Type": "application/json"
+    };
+
+    if (isServiceAccount) {
+        URL = SERVICE_ACCOUNT_URL + "jobs/" + hpcContext.id + "/" + projectName.split(" (sa)")[0] + "/example/";
+        METHOD = "GET";
+    } else {
+        if (hpcContext.id == "PIZDAINT" || hpcContext.id == "GALILEO") {
+            URL = ROOT_SITE_URL + "/hpc-monitor/" + hpcContext.id.toLowerCase() + "/check";
+            METHOD = "GET";
+            HEADERS["X-UNICORE-User-Preferences"] = "group:" + projectName;
+        } else {
+            URL = hpcContext.submit_url;
+            METHOD = "POST";
+            JOB = hpcContext.job.on_system;
+            HEADERS["X-UNICORE-User-Preferences"] = "group:" + projectName;
+        }
     }
 
-    var authorization = client.getToken();
-    authorization.then((session) => {
-
-        let URL = '';
-        let METHOD = '';
-        let JOB = null;
-        let HEADERS = {
-            "Authorization": "Bearer " + session.access_token,
-            "Content-Type": "application/json"
-        };
-
-        if (isServiceAccount) {
-            URL = SERVICE_ACCOUNT_URL + "jobs/" + hpcContext.id + "/" + projectName.split(" (sa)")[0] + "/example/";
-            METHOD = "GET";
-        } else {
-            if (hpcContext.id == "PIZDAINT" || hpcContext.id == "GALILEO") {
-                URL = ROOT_SITE_URL + "/hpc-monitor/" + hpcContext.id.toLowerCase() + "/check";
-                METHOD = "GET";
-                HEADERS["X-UNICORE-User-Preferences"] = "group:" + projectName;
-            } else {
-                URL = hpcContext.submit_url;
-                METHOD = "POST";
-                JOB = hpcContext.job.on_system;
-                HEADERS["X-UNICORE-User-Preferences"] = "group:" + projectName;
-            }
-        }
-
-        $.ajax({
-            url: URL,
-            method: METHOD,
-            headers: HEADERS,
-            data: JOB,
-            beforeSend: function(data) {
-                $(".submission-button." + projectName).addClass("fade-out");
-                $(".project.sonar." + projectName).css("opacity", "1");
-            },
-            success: function(data, status, code) {
-                console.log(data);
+    $.ajax({
+        url: URL,
+        method: METHOD,
+        headers: HEADERS,
+        data: JOB,
+        beforeSend: function(data) {
+            $(".submission-button." + projectName).addClass("fade-out");
+            $(".project.sonar." + projectName).css("opacity", "1");
+        },
+        success: function(data, status, code) {
+            console.log(data);
+            $(".project.sonar." + projectName + " > .submission-icon").addClass("ok");
+        },
+        error: function(data, status, code) {
+            if (data.status == 201) {
                 $(".project.sonar." + projectName + " > .submission-icon").addClass("ok");
-            },
-            error: function(data, status, code) {
-                if (data.status == 201) {
-                    $(".project.sonar." + projectName + " > .submission-icon").addClass("ok");
-                } else {
-                    $(".project.sonar." + projectName + " > .submission-icon").addClass("no");
-                    showAlert("The user cannot submit job at this moment");
-                }
-            },
-            complete: function(data, status, code) {
-                $(".project.sonar." + projectName + " > .sonar-wave").css("animation", "stop");
-                $(".project.sonar." + projectName + " > .submission-icon").css("animation", "loadedIcon 1s ease-out 1 forwards");
+            } else {
+                $(".project.sonar." + projectName + " > .submission-icon").addClass("no");
+                showAlert("The user cannot submit job at this moment");
             }
-	    });
-
+        },
+        complete: function(data, status, code) {
+            $(".project.sonar." + projectName + " > .sonar-wave").css("animation", "stop");
+            $(".project.sonar." + projectName + " > .submission-icon").css("animation", "loadedIcon 1s ease-out 1 forwards");
+        }
     });
 }
 
@@ -734,40 +710,31 @@ function setCircleProgressBar(id) {
 function getHPCStatus(hpc) {
     let hpcStatus = $("." + hpc.id.toLowerCase() + "-status");
 
-    try {
-        client.callback();
-    } catch (e) {
-        console.warn("Issue decoding the token");
-    }
-
-    var authorization = client.getToken();
-    authorization.then((session) => {
-        $.ajax({
-            url: hpc.root_url,
-            headers: {
-                "Authorization": "Bearer " + session.access_token
-            },
-            type: "GET",
-            timeout: 30000,
-	        success: function(result, status, code) {
-                console.log(hpc.id + " ajax get request result: " + code.status);
-                hpcStatus.children(".sonar").children(".status-icon").addClass("ok");
-                $("." + hpc.id.toLowerCase() + "-section").removeClass("disabled");
-                $("." + hpc.id.toLowerCase() + "-section").addClass("enabled");
-                $("." + hpc.id.toLowerCase() + "-button").prop("disabled", false);
-            },
-            error: function(error, status, code) {
-                if (status == "timeout") {
-		            showAlert("It's seems " + hpc.id + " is down. Check your internet connection or try again later.");
-		        }
-                console.warn(hpc.id + " ajax get request error: " + error.status);
-                hpcStatus.children(".sonar").children(".status-icon").addClass("no");
-                showAlert(hpc.id + " is not accessible at the moment.<br>Please try again later.");
+    $.ajax({
+        url: hpc.root_url,
+        headers: {
+            "Authorization": "Bearer " + window.sessionStorage.getItem("access_token")
+        },
+        type: "GET",
+        timeout: 30000,
+        success: function(result, status, code) {
+            console.log(hpc.id + " ajax get request result: " + code.status);
+            hpcStatus.children(".sonar").children(".status-icon").addClass("ok");
+            $("." + hpc.id.toLowerCase() + "-section").removeClass("disabled");
+            $("." + hpc.id.toLowerCase() + "-section").addClass("enabled");
+            $("." + hpc.id.toLowerCase() + "-button").prop("disabled", false);
+        },
+        error: function(error, status, code) {
+            if (status == "timeout") {
+                showAlert("It's seems " + hpc.id + " is down. Check your internet connection or try again later.");
             }
-        }).always(() => {
-            hpcStatus.children(".sonar").children(".sonar-wave").css("animation", "stop");
-            hpcStatus.children(".sonar").children(".status-icon").css("animation", "loadedIcon 1s ease-out 1 forwards");
-        });
+            console.warn(hpc.id + " ajax get request error: " + error.status);
+            hpcStatus.children(".sonar").children(".status-icon").addClass("no");
+            showAlert(hpc.id + " is not accessible at the moment.<br>Please try again later.");
+        }
+    }).always(() => {
+        hpcStatus.children(".sonar").children(".sonar-wave").css("animation", "stop");
+        hpcStatus.children(".sonar").children(".status-icon").css("animation", "loadedIcon 1s ease-out 1 forwards");
     });
 }
 
@@ -775,32 +742,23 @@ function getHPCStatus(hpc) {
 function getServiceAccountStatus(hpc) {
     let hpcSAStatus = $("." + hpc.id.toLowerCase() + "-sa-status");
 
-    try {
-        client.callback();
-    } catch (e) {
-        console.warn("Issue decoding the token");
-    }
-
-    var authorization = client.getToken();
-    authorization.then((session) => {
-        $.ajax({
-            url: SERVICE_ACCOUNT_URL + "hpc/" + hpc.id.toLowerCase() + "/",
-            headers: {
-                "Authorization": "Bearer " + session.access_token
-            },
-            type: "GET",
-            success: function(result, status, code) {
-                console.log(hpc.id + " SA ajax get request result: " + code.status);
-                hpcSAStatus.children(".sonar").children(".sa-status-icon").addClass("ok");
-            },
-            error: function(error, status, code) {
-                console.warn(hpc["id"] + " SA ajax get request error: " + error.status);
-                hpcSAStatus.children(".sonar").children(".sa-status-icon").addClass("no");
-            }
-        }).always(() => {
-            hpcSAStatus.children(".sonar").children(".sonar-wave").css("animation", "stop");
-            hpcSAStatus.children(".sonar").children(".sa-status-icon").css("animation", "loadedIcon 1s ease-out 1 forwards");
-        });
+    $.ajax({
+        url: SERVICE_ACCOUNT_URL + "hpc/" + hpc.id.toLowerCase() + "/",
+        headers: {
+            "Authorization": "Bearer " + window.sessionStorage.getItem("access_token")
+        },
+        type: "GET",
+        success: function(result, status, code) {
+            console.log(hpc.id + " SA ajax get request result: " + code.status);
+            hpcSAStatus.children(".sonar").children(".sa-status-icon").addClass("ok");
+        },
+        error: function(error, status, code) {
+            console.warn(hpc["id"] + " SA ajax get request error: " + error.status);
+            hpcSAStatus.children(".sonar").children(".sa-status-icon").addClass("no");
+        }
+    }).always(() => {
+        hpcSAStatus.children(".sonar").children(".sonar-wave").css("animation", "stop");
+        hpcSAStatus.children(".sonar").children(".sa-status-icon").css("animation", "loadedIcon 1s ease-out 1 forwards");
     });
 }
 
@@ -901,14 +859,13 @@ function getLogin() {
         headers: {
             "Context": "HPC"
         },
-        success: (results) => {
-            data = JSON.parse(results);
-            console.log(data);
+        success: (data) => {
+            window.sessionStorage.setItem("access_token", data.access_token);
+            window.sessionStorage.setItem("username", data.username);
             startApp();
         },
         error: (error) => {
             console.error("User not detected");
-            // showAlert("User not detected");
             window.location.href = "/oidc/authenticate/";
         }
     });
@@ -923,7 +880,6 @@ var HPC_KEYS = Object.keys(HPC_JSON);
 
 
 $(document).ready(() => {
-    console.log("document ready!");
     getLogin();
 });
 

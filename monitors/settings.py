@@ -17,6 +17,12 @@ from monitors.module.path import *
 sys.path.append(KEYS_PATH)
 sys.path.append(DB_CONF_PATH)
 
+from production_key import SECRET_KEY
+from database_conf import *
+
+from monitors.module.admin import ADMIN_ID
+
+
 DEBUG = False
 
 
@@ -30,9 +36,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: don't run with debug turned on in production!
 
 ALLOWED_HOSTS = ['*']
-
-from django.core.management import utils
-SECRET_KEY = utils.get_random_secret_key()
 
 
 # Application definition
@@ -164,6 +167,8 @@ OIDC_OP_USER_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-
 OIDC_RP_SIGN_ALGO ="RS256"
 OIDC_OP_JWKS_ENDPOINT="https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/certs"
 OIDC_STORE_ACCESS_TOKEN = True
+
+OIDC_RP_SCOPES = 'openid profile email'
 
 LOGIN_REDIRECT_URL = '/hpc-monitor'
 
