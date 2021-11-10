@@ -1,8 +1,9 @@
+from json.decoder import JSONDecodeError
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
 
-from monitors.settings import ADMIN_ID, HBP_MY_USER_URL as USER_URL
+from monitors.settings import ADMIN_ID, EBRAINS_USER_URL as USER_URL
 from monitors.models import *
 
 import requests
@@ -17,25 +18,41 @@ def get_status(request):
 
 def get_user(request):
     user_id = -1
+    username = ''
     application = request.META['HTTP_CONTEXT']
 
+    access_token = request.session.get('oidc_access_token')
+    if not access_token:
+        return HttpResponse(status=401)
+
     headers = {
-        'Authorization': request.META['HTTP_AUTHORIZATION'],
+        'Authorization': 'Bearer ' + access_token,
         'Content-Type': 'application/json'
     }
-    r = requests.get(url=USER_URL, headers=headers)
-    if r.status_code == 200:
-        user_id=int(r.json()['id'])
     
-    response = HttpResponse()
-    if user_id > -1:
-        Access(user_id=user_id, application=application).save()
-        response.status_code = 200
-        response.content = b'OK'
-    else:
-        response.status_code = 401
-        response.content = b'User not recognized'
-    return response
+    try:
+        r = requests.get(url=USER_URL, headers=headers)
+        if r.status_code == 200:
+            user_id = r.json()['sub']
+            username = r.json()['preferred_username']
+
+        data = {'access_token': None, 'username': None}
+        if user_id:
+            Access(user_id=user_id, application=application).save()
+            data = {'access_token': access_token, 'username': username}
+            return JsonResponse(data, safe=False)
+    
+    except Exception as e:
+        print('ERROR > ' + str(e))
+
+    return HttpResponse(status=401)
+
+
+def get_user_avatar(request):
+    url = 'https://wiki.ebrains.eu/bin/download/XWiki/' + request.user.username \
+        + '/avatar.png?width=36&height=36&keepAspectRatio=true'
+    r = requests.get(url, verify=False)
+    return HttpResponse(content=r.content, content_type='image/png;', charset='UTF-8')
 
 
 def home(request):

@@ -6,7 +6,7 @@ from django.utils.timezone import now
 
 
 class Access(models.Model):
-    user_id = models.IntegerField()
+    user_id = models.UUIDField(primary_key=False, editable=True)
     date = models.DateTimeField(auto_now_add=True)
     application = models.CharField(max_length=3)
 
@@ -18,6 +18,7 @@ class Access(models.Model):
             self.date = now()
         try:
             last_access = list(Access.objects.filter(user_id=self.user_id))[-1]
+            
             if ((self.date - last_access.date).seconds / 300) < 1.0 and self.application == last_access.application:
                 print('Sessione already saved')
                 return
@@ -28,3 +29,4 @@ class Access(models.Model):
     
     def as_json(self):
         return dict(user_id=self.user_id, date=self.date, application=self.application + '-Monitor')
+        # return dict(user_id=self.user_id, date=self.date, application=self.application + '-Monitor')
